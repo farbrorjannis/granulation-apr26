@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="sv">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Pigment-mixern – Färgblandning & Granulation</title>
+<title>Pigment Mixer – Blending & Granulation</title>
 <style>
-  /* --- 🎨 GLOBAL STYLING (Matching modern SaaS tools) --- */
+  /* --- 🎨 GLOBAL STYLING (Modern SaaS Aesthetic) --- */
   :root {
-    --primary-bg: #ffffff; /* Light background */
-    --secondary-bg: #f7f8fa; /* Soft panel background */
+    --primary-bg: #ffffff; /* Main content background */
+    --secondary-bg: #f7f8fa; /* Panel background (soft contrast) */
     --text: #333;
     --muted: #666;
-    /* Keeping your accent color for branding/action points */
+    /* Keeping the accent color for branding/action points */
     --accent: #e57d12; 
   }
 
@@ -57,10 +57,10 @@
   }
   @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
 
-  /* Input Panels (The left side controls) */
+  /* Input Panels */
   .panel, .granulation-wrap {
     background: var(--secondary-bg);
-    border: none; /* Removed harsh borders for a softer look */
+    border: none; /* Removed harsh borders */
     padding: 24px;
     border-radius: 16px;
     box-shadow: 0 4px 8px rgba(0,0,0,0.05);
@@ -91,4 +91,370 @@
     border-radius: 8px;
     cursor: pointer;
     appearance: none; /* Removes default OS styling */
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20stroke%3D%22%23999%22%20stroke-width%3D%221.5%22%20viewBox%3d%220%200%2020%2020%22%3E%3Cpath%20fill%3D%22none%22%20d%3D%22M9.293%2012.95l.707.707L15.657%206H19V14H9.293l-.707.707L3%
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3d%220%200%2020%2020%22%20fill%3D%22none%22%20stroke%3d%22%23999%22%20stroke-width%3d%221.5%22%20viewBox%3d%220%200%2020%2020%22%3E%3Cpath%20fill%3D%22none%22%20d%3D%22M9.293%2012.95l.707.707L15.657%206H19V14H9.293l-.707.707L3%22%3E%3C/path%3E%3C/svg%3E');
+    background-repeat: no-repeat;
+    background-position: right 10px top, center;
+    background-size: 1em;
+  }
+
+  /* Swatches and Results */
+  .swatches { display: flex; align-items: center; gap: 20px; margin-top: 25px; flex-wrap: wrap }
+  .circle { width: 70px; height: 70px; border-radius: 50%; border: 3px solid #ddd; box-shadow: inset 0 0 0 1px rgba(0,0,0,.05); background: #ccc; }
+  .eq { font-size: 32px; font-weight: 700; opacity: .8; color: var(--muted); }
+  .result-circle { width: 90px; height: 90px; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 6px 25px rgba(0,0,0,.1), inset 0 0 0 3px rgba(0,0,0,.2); }
+
+  /* Granulation Area */
+  .granulation-wrap {
+    padding: 24px;
+  }
+  .gran-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 15px; }
+  .badge { font-size: 11px; text-transform: uppercase; background: #e9ecef; color: var(--text); padding: 4px 10px; border-radius: 25px; letter-spacing: 0.8px; border: 1px solid #ddd; }
+  .badge--gran { background: #d6b79d; color: #5c3a22; font-weight: 600; }
+
+  /* Controls and Utility */
+  button#mixBtn {
+    padding: 12px 25px;
+    background-color: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 20px;
+    transition: background-color 0.2s;
+  }
+  button#mixBtn:hover { background-color: #d46c10; }
+
+  /* Description and Meta Info */
+  #description {
+    background: #fff;
+    padding: 18px;
+    border-radius: 10px;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 90px;
+    border-left: 4px solid var(--accent); /* Highlight the result */
+    margin-top: 20px;
+  }
+  .meta { display: flex; gap: 15px; flex-wrap: wrap; margin-top: 15px; font-size: 0.9em; color: var(--muted); }
+  .tag { font-size: 11px; text-transform: uppercase; background: #e9ecef; padding: 3px 8px; border-radius: 4px; margin-right: 5px; display: inline-block;}
+
+  /* Status Indicator */
+  .status { font-size: 0.9em; color: var(--muted); margin-top: 20px; }
+
+  /* Canvas Styling */
+  .canvas-frame {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    box-shadow: inset 0 0 15px rgba(0,0,0,.1);
+  }
+  #granCanvas { display: block; width: 100%; height: auto; }
+
+</style>
+</head>
+<body>
+<div class="mixer-box" aria-live="polite">
+  <h1>PIGMENT MIXER</h1>
+  <p class="lead">
+    Select two pigments. The resulting color and a detailed <b id="granulationHighlight">granulation field</b> are generated automatically.
+  </p>
+
+  <div class="grid">
+    <!-- LEFT PANEL: Controls & Blending -->
+    <div class="panel" style="grid-column: span 1;">
+      <h3>Select Pigments</h3>
+      
+      <label for="p1">Color 1 (Pigment)</label>
+      <select id="p1">
+        <option value="" disabled selected>Select a pigment…</option>
+        <!-- Options remain the same -->
+        <option value="PB29">Ultramarine (PB29)</option>
+        <option value="PBr7">Burnt Sienna (PBr7)</option>
+        <option value="PY150">Nickel Azo Yellow (PY150)</option>
+        <option value="PV19">Quinacridone Rose (PV19)</option>
+        <option value="PG7">Phthalo Green (PG7)</option>
+        <option value="PB15_3">Phthalo Blue (PB15:3)</option>
+        <option value="PB28">Cobalt Blue (PB28)</option>
+        <option value="PB36">Cerulean Blue Chromium (PB36)</option>
+        <option value="PG50">Cobalt-Turquoise (PG50)</option>
+        <option value="PV14">Cobalt Violet (PV14)</option>
+        <option value="PBk11">Lunar/Mars Black (PBk11)</option>
+        <option value="PY43">Yellow Ochre (PY43)</option>
+        <option value="PBr7RU">Raw Umber (PBr7RU)</option>
+        <option value="PR101">Transparent Red Oxide (PR101)</option>
+        <option value="PR209">Quinacridone Red (PR209)</option>
+        <option value="PB60">Indanthrone Blue (PB60)</option>
+        <option value="PB27">Prussian Blue (PB27)</option>
+        <option value="PG18">Viridian (PG18)</option>
+        <option value="PB16">Phthalo Turquoise (PB16)</option>
+        <option value="PO48">Quinacridone Burnt Orange (PO48)</option>
+      </select>
+
+      <label for="p2">Color 2 (Pigment)</label>
+      <select id="p2">
+        <option value="" disabled selected>Select a pigment…</option>
+        <!-- Options remain the same -->
+        <option value="PB29">Ultramarine (PB29)</option>
+        <option value="PBr7">Burnt Sienna (PBr7)</option>
+        <option value="PY150">Nickel Azo Yellow (PY150)</option>
+        <option value="PV19">Quinacridone Rose (PV19)</option>
+        <option value="PG7">Phthalo Green (PG7)</option>
+        <option value="PB15_3">Phthalo Blue (PB15:3)</option>
+        <option value="PB28">Cobalt Blue (PB28)</option>
+        <option value="PB36">Cerulean Blue Chromium (PB36)</option>
+        <option value="PG50">Cobalt-Turquoise (PG50)</option>
+        <option value="PV14">Cobalt Violet (PV14)</option>
+        <option value="PBk11">Lunar/Mars Black (PBk11)</option>
+        <option value="PY43">Yellow Ochre (PY43)</option>
+        <option value="PBr7RU">Raw Umber (PBr7RU)</option>
+        <option value="PR101">Transparent Red Oxide (PR101)</option>
+        <option value="PR209">Quinacridone Red (PR209)</option>
+        <option value="PB60">Indanthrone Blue (PB60)</option>
+        <option value="PB27">Prussian Blue (PB27)</option>
+        <option value="PG18">Viridian (PG18)</option>
+        <option value="PB16">Phthalo Turquoise (PB16)</option>
+        <option value="PO48">Quinacridone Burnt Orange (PO48)</option>
+      </select>
+
+      <!-- Swatches -->
+      <div class="swatches">
+        <div id="c1" class="circle" title="Color 1"></div>
+        <span class="eq">+</span>
+        <div id="c2" class="circle" title="Color 2"></div>
+        <span class="eq">=</span>
+        <div id="resCircle" class="result-circle" title="Mixed Result Color"></div>
+      </div>
+
+      <!-- New Control: Binder Consistency -->
+      <label for="binder">Binder/Medium Consistency (Control)</label>
+      <input type="range" id="binder" min="0.1" max="2.0" step="0.1" value="1.0">
+      <div style="display: flex; justify-content: space-between; font-size: 0.8em;">
+        <span>Loose (High Granulation)</span>
+        <span>Cohesive (Low Granulation)</span>
+      </div>
+
+      <button type="button" id="mixBtn">Update Blend</button>
+
+      <!-- Result Display -->
+      <div id="description">Select two colors to see the blend result...</div>
+      
+      <!-- Metadata -->
+      <div class="meta">
+        <span id="metaPigments"></span>
+        <span id="metaGran"></span>
+        <span id="metaHex"></span>
+      </div>
+      <div id="status" class="status">JS: Initializing...</div>
+    </div>
+
+    <!-- RIGHT PANEL: Granulation Preview -->
+    <div class="granulation-wrap" style="grid-column: span 1;">
+      <div class="gran-header">
+        <h3>Granulation Preview (Field)</h3>
+        <div>
+          <span class="badge badge--gran">granulation</span>
+          <span>Strength: <span id="granStrength">–</span>%</span>
+        </div>
+      </div>
+      <div class="canvas-frame">
+        <canvas id="granCanvas" width="960" height="480" role="img" aria-label="Visual preview of granulation"></canvas>
+      </div >
+      <p style="margin: 15px 0 0; color: var(--muted); font-size: 0.9em;">
+        The texture is generative and based on the pigment's natural granularity (0–100%). The binder consistency adjusts how visible that structure will be in the final paint layer.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---- Pigment Data (20 st) ----
+  const PIGMENTS = {
+    "PB29":   { name: "Ultramarine",                hex: "#4169E1", gran: 0.9 },
+    "PBr7":   { name: "Burnt Sienna",              hex: "#A0522D", gran: 0.8 },
+    "PY150":  { name: "Nickel Azo Yellow",         hex: "#E2C200", gran: 0.0 },
+    "PV19":   { name: "Quinacridone Rose",         hex: "#C71585", gran: 0.0 },
+    "PG7":    { name: "Phthalo Green",             hex: "#00A550", gran: 0.0 },
+    "PB15_3": { name: "Phthalo Blue (GS)",         hex: "#0B4FA8", gran: 0.0 },
+    "PB28":   { name: "Cobalt Blue",                 hex: "#3F7AC4", gran: 0.7 },
+    "PB36":   { name: "Cerulean Blue Chromium",    hex: "#5AA7C4", gran: 0.9 },
+    "PG50":   { name: "Cobalt-Turquoise (Teal)",      hex: "#4FB4A7", gran: 0.7 },
+    "PV14":   { name: "Cobalt Violet",             hex: "#9C7CB9", gran: 0.8 },
+    "PBk11":  { name: "Lunar/Mars Black",          hex: "#2B2B2B", gran: 1.0 },
+    "PY43":   { name: "Yellow Ochre (Yellow)",     hex: "#C49A3A", gran: 0.6 },
+    "PBr7RU": { name: "Raw Umber",                  hex: "#7B5A3A", gran: 0.7 },
+    "PR101":  { name: "Transparent Red Oxide",     hex: "#9A3A20", gran: 0.7 },
+    "PR209":  { name: "Quinacridone Red",          hex: "#C22A3F", gran: 0.0 },
+    "PB60":   { name: "Indanthrone Blue",          hex: "#1E2A78", gran: 0.0 },
+    "PB27":   { name: "Prussian Blue",            hex: "#113F67", gran: 0.2 },
+    "PG18":   { name: "Viridian",                  hex: "#2C8B7B", gran: 0.5 },
+    "PB16":   { name: "Phthalo Turquoise",         hex: "#0B7C8C", gran: 0.0 },
+    "PO48":   { name: "Quinacridone Burnt Orange", hex: "#C2572C", gran: 0.0 }
+  };
+
+  // ---- Recipe Guides (Informational Texts) ----
+  const RECIPES = {
+    "PB29+PBr7": "<b style='color:#4169E1;'>‘Jane’s Grey’ / Etching Grey</b><br><span class='tag'>Granulating</span> Lively, neutral grey blend for clouds and shadows.",
+    "PB29+PV19": "<b>Light Lavender / Violet</b><br><span class='tag'>Semi-granulating</span> Ultramarine's particles provide depth to the violet.",
+    "PY150+PB15_3": "<b style='color:#E2C200;'>Clear Green</b><br><span class='tag'>Translucent</span> Pure and luminous blend.",
+    "PBr7+PG7": "<b>Forest Green / Near Black</b><br><span class='tag'>Deep Color</span> Lively dark tones for natural subjects.",
+    "PB36+PR101": "<b style='color:#5AA7C4;'>Steel Blue-Gray</b><br><span class='tag'>Granulating</span> Cerulean + earthy red. Good for atmospheric skies.",
+    "PB28+PY43": "<b>Landscape Green</b><br><span class='tag'>Granulating</span> Cool cobalt + yellow ochre. Perfect for earth tones.",
+    // Special case: Black pigment always increases granulation
+    "PBk11+any": "<b style='color:#2B2B2B;'>Textural Booster</b><br><span class='tag'>High Granulation</span> PBk11 strongly promotes particle separation and texture.",
+    "DEFAULT": "Experiment by varying the medium consistency (binder). Granulation is highly influenced by the support material and paint thickness."
+  };
+
+  // ---- Helper Functions ----
+  const hexToRgb = (hex) => { const n=parseInt(hex.slice(1),16); return {r:(n>>16)&255, g:(n>>8)&255, b:n&255}; };
+  const rgbToHex = (r,g,b) => "#"+[r,g,b].map(v=>v.toString(16).padStart(2,"0")).join("");
+  // Simple linear blend function for colors
+  const blendHex = (c1,c2,w=0.5) => { const a=hexToRgb(c1), b=hexToRgb(c2); return rgbToHex(Math.round(a.r*(1-w)+b.r*w), Math.round(a.g*(1-w)+b.g*w), Math.round(a.b*(1-w)+b.b*w)); };
+  // Adjusts color value (lightens/darkens)
+  const adjustHex = (hex,f=1)=>{ const {r,g,b}=hexToRgb(hex); const c=x=>Math.max(0,Math.min(255,Math.round(x))); return rgbToHex(c(r*f),c(g*f),c(b*f)); };
+
+  // ---- DOM Elements ----
+  const p1 = document.getElementById('p1');
+  const p2 = document.getElementById('p2');
+  const c1 = document.getElementById('c1');
+  const c2 = document.getElementById('c2');
+  const res = document.getElementById('resCircle');
+  const desc = document.getElementById('description');
+  const metaPigments = document.getElementById('metaPigments');
+  const metaGran = document.getElementById('metaGran');
+  const metaHex = document.getElementById('metaHex');
+  const binderSlider = document.getElementById('binder'); // New element
+  const granStrength = document.getElementById('granStrength');
+  const statusEl = document.getElementById('status');
+  const canvas = document.getElementById('granCanvas');
+  let ctx = null;
+
+  // Context Setup
+  try { ctx = canvas.getContext('2d', {alpha:true}); } catch(e){ ctx = null; }
+
+  // ---- Granulation Drawing Function (Enhanced) ----
+  function drawGranulation(baseHex, granLevel, binderConsistency){
+    if(!ctx) return; 
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0,0,W,H);
+    
+    // 1. Background Base Color
+    ctx.fillStyle = baseHex; 
+    ctx.fillRect(0,0,W,H);
+
+    // 2. Paper Texture (Always subtle)
+    const paperAlpha = 0.03, paperStep = 4;
+    for(let y=0;y<H;y+=paperStep){
+      for(let x=0;x<W;x+=paperStep){
+        const n=(Math.sin(x*0.021)+Math.sin(y*0.017))*0.5 + Math.random()*0.35;
+        // Subtle variation in tone for aged paper feel
+        const tone=Math.floor(240 + n*15); 
+        ctx.fillStyle=`rgba(${tone},${tone},${tone},${paperAlpha})`;
+        ctx.fillRect(x,y,paperStep,paperStep);
+      }
+    }
+
+    if(granLevel < 0.1) { // If granulation is very low or zero
+        return;
+    }
+    
+    // Granulation visualization parameters:
+    const maxDensity = 7000 + granLevel * 18000;
+    const maxSize = 2 + Math.round(granLevel * 4);
+
+    // Binder consistency effect: High binder (near 2.0) reduces visible granulation dots. Low binder (near 0.1) increases it.
+    const visibilityFactor = 1 - Math.pow(Math.max(0, 1 - ((binderConsistency - 1)/1)), 2); // Inverts the slider effect: closer to 1 means more separation.
+    
+    // Adjust density and size based on binder consistency
+    const adjustedDensity = maxDensity * (0.5 + visibilityFactor * 0.5); 
+
+    const dark=adjustHex(baseHex, 0.72);
+    const light=adjustHex(baseHex, 1.15);
+
+    for(let i=0;i<adjustedDensity;i++){
+      const x=Math.random()*W, y=Math.random()*H;
+      // Size slightly influenced by binder: more binder = smaller particles visible
+      const size=Math.max(0.5, maxSize * (1 - Math.pow(binderConsistency-1, 0.5)) + Math.random() * 2); 
+
+      const pickLight=Math.random()<0.4; // Reduced chance of light particle for a more natural mix look
+      const jitter=(Math.sin(x*0.015)+Math.cos(y*0.014))*0.5;
+      // Alpha is boosted by the visibility factor and slightly randomized
+      let alpha = Math.max(0.08, Math.min(0.6, 0.15 + granLevel * 0.3 + jitter * 0.05) * (0.4 + visibilityFactor*0.6));
+
+      ctx.globalAlpha=alpha;
+      ctx.fillStyle=pickLight ? light : dark;
+      ctx.fillRect(x,y,size,size);
+    }
+    ctx.globalAlpha=1;
+  }
+
+  // ---- Core Mixing Function (Now incorporating binder control) ----
+  function mix(){
+    const a = p1.value, b = p2.value;
+    if(!a || !b || !PIGMENTS[a] || !PIGMENTS[b]) { 
+        // If nothing is selected, reset everything
+        c1.style.background = '#ccc'; c2.style.background = '#ccc'; res.style.background = '#ccc'; 
+        desc.innerHTML = 'Select two colors to see the blend result...';
+        metaPigments.textContent = ''; metaGran.textContent = ''; metaHex.textContent = '';
+        granStrength.textContent = '–';
+        drawGranulation('#cccccc', 0, 1.0); // Draw neutral background
+        return; 
+    }
+
+    // Get current control values
+    const binderConsistency = parseFloat(binderSlider.value);
+
+    // 1. Color Calculation
+    c1.style.background = PIGMENTS[a].hex;
+    c2.style.background = PIGMENTS[b].hex;
+    const resHex = blendHex(PIGMENTS[a].hex, PIGMENTS[b].hex, 0.5);
+    res.style.background = resHex;
+
+    // 2. Granulation Calculation (Average of the two pigments)
+    const granLevel = (PIGMENTS[a].gran + PIGMENTS[b].gran)/2;
+    
+    // 3. Recipe Text (Handles the special black case)
+    let recipeKey = `${a}+${b}`;
+    if (a === "PBk11" || b === "PBk11") {
+        recipeKey = "PBk11+any";
+    } else {
+        const reverseKey = `${b}+${a}`;
+        recipeKey = RECIPES[recipeKey] || RECIPES[reverseKey] || RECIPES["DEFAULT"];
+    }
+    desc.innerHTML = recipeKey;
+
+    // 4. Metadata Update
+    metaPigments.textContent = `Pigment: ${PIGMENTS[a].name} (${a}) + ${PIGMENTS[b].name} (${b})`;
+    metaGran.textContent = `Natural Granulation Potential: ${(granLevel*100).toFixed(0)}%`;
+    metaHex.textContent = `HEX Result: ${resHex.toUpperCase()}`;
+
+    // 5. Strength and Visualization Update
+    const effectiveStrength = Math.min(100, granLevel * 120 + (binderConsistency < 1 ? 10 : 0)); // Adjust strength slightly based on binder for display effect
+    granStrength.textContent = `${Math.round(effectiveStrength)}%`;
+
+    // Draw the granulation field using all three variables
+    drawGranulation(resHex, granLevel, binderConsistency);
+  }
+
+  // ---- Event Listeners and Initialization ----
+  function wire(){
+    p1.addEventListener('change', mix);
+    p2.addEventListener('change', mix);
+    binderSlider.addEventListener('input', mix); // Add listener for the slider
+    document.getElementById('mixBtn').addEventListener('click', mix);
+
+    // Initialize with default values
+    p1.value = "PB29";
+    p2.value = "PBr7";
+    mix();
+    statusEl.textContent = "JS: Ready! Start selecting pigments.";
+  }
+  
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", wire);
+  } else {
+    wire();
+  }
+</script>
+</body>
+</html>
