@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pigment-mixern – Färgblandning & Granulation</title>
+<style>
+  /* --- 🎨 GLOBAL STYLING (Matching modern SaaS tools) --- */
+  :root {
+    --primary-bg: #ffffff; /* Light background */
+    --secondary-bg: #f7f8fa; /* Soft panel background */
+    --text: #333;
+    --muted: #666;
+    /* Keeping your accent color for branding/action points */
+    --accent: #e57d12; 
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    margin: 0;
+    padding: 32px;
+    color: var(--text);
+    background: #f4f7fa; /* Very light grey background */
+  }
+
+  /* Main Container Box (The overall "card") */
+  .mixer-box {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    background: var(--primary-bg);
+    border-radius: 24px; /* More rounded, softer look */
+    padding: 36px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1), inset 0 0 0 1px #eee; /* Soft lift effect */
+  }
+
+  /* Headings and Lead Text */
+  h1 {
+    letter-spacing: 0.5px;
+    color: var(--text);
+    margin-bottom: 8px !important;
+    font-size: 2.2em;
+  }
+  p.lead {
+    margin: 6px 0 30px;
+    color: var(--muted);
+    font-size: 1.1rem;
+  }
+
+  /* Layout Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 25px;
+  }
+  @media (max-width: 960px) { .grid { grid-template-columns: 1fr; } }
+
+  /* Input Panels (The left side controls) */
+  .panel, .granulation-wrap {
+    background: var(--secondary-bg);
+    border: none; /* Removed harsh borders for a softer look */
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  }
+
+  h3 {
+    color: var(--accent);
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+  }
+
+  /* Forms and Selects */
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 15px; /* Increased spacing */
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  select {
+    width: 100%;
+    padding: 12px;
+    background: #fff;
+    color: var(--text);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    appearance: none; /* Removes default OS styling */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20stroke%3D%22%23999%22%20stroke-width%3D%221.5%22%20viewBox%3d%220%200%2020%2020%22%3E%3Cpath%20fill%3D%22none%22%20d%3D%22M9.293%2012.95l.707.707L15.657%206H19V14H9.293l-.707.707L3%
